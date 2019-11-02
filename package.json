@@ -25,9 +25,14 @@
   "engines": {
     "node": "10.x"
   },
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
     "@slack/events-api": "^2.3.0",
     "@slack/web-api": "^5.4.0",
+    "dotenv": "^8.2.0",
     "lodash.keyby": "^4.6.0",
     "lodash.mapvalues": "^4.6.0",
     "lodash.omit": "^4.5.0"
