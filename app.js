@@ -29,7 +29,7 @@ const slackEvents = createEventAdapter(slackSigningSecret, {
 });
 
 // Initialize a Web Client
-const slack = new WebClient(process.env.SLACK_CLIENT_TOKEN);
+const slack = new WebClient(process.env.SLACK_ACCESS_TOKEN);
 
 // Read the port from the environment variables, fallback to 3000 default.
 const port = process.env.PORT || 3000;
@@ -51,7 +51,11 @@ slackEvents.on('link_shared', (event, body, headers) => {
     .then(attachments => keyBy(attachments, 'url'))
     .then(unfurls => mapValues(unfurls, attachment => omit(attachment, 'url')))
     // Invoke the Slack Web API to append the attachment
-    .then(unfurls => slack.chat.unfurl(event.message_ts, event.channel, unfurls))
+    .then(unfurls => slack.apiCall('chat.unfurl', {
+        channel: event.channel,
+        ts: event.message_ts, 
+        unfurls: unfurls
+      }))
     .catch(console.error);
 });
 
