@@ -1,0 +1,35 @@
+{
+  "name": "vs-marketplace-unfurl",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Slack app for Visual Studio marketplace extension links preview",
+  "license": "Apache-2.0",
+  "author": "Random Fractals, Inc.",
+  "contributors": [
+    "Taras Novak"
+  ],
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RandomFractals/vs-marketplace-unfurl"
+  },
+  "bugs": "https://github.com/RandomFractals/vs-marketplace-unfurl/issues",
+  "homepage": "https://github.com/RandomFractals/vs-marketplace-unfurl/README.md",
+  "keywords": [
+    "Visual Studio",
+    "marketplace",
+    "extensions",
+    "Slack App",
+    "links preview"
+  ],
+  "engines": {
+    "node": "10.x"
+  },
+  "dependencies": {
+    "@slack/events-api": "^2.3.0",
+    "@slack/web-api": "^5.4.0",
+    "lodash.keyby": "^4.6.0",
+    "lodash.mapvalues": "^4.6.0",
+    "lodash.omit": "^4.5.0"
+  }
+}
