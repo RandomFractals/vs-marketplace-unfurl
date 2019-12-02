@@ -1,40 +1,24 @@
+const http = require('http');
 const { createEventAdapter } = require('@slack/events-api');
 const { WebClient } = require('@slack/web-api');
 const keyBy = require('lodash.keyby');
 const omit = require('lodash.omit');
 const mapValues = require('lodash.mapvalues');
 
-function messageAttachmentFromLink(link) {
-  return {
-    "color": "#36a64f",
-    "title": link.url,
-    "title_link": link.url,
-    "footer": "VS Marketplace",
-    url: link.url
-  };
-}
+// load .env config
+require('dotenv').config();
 
-if (process.env.NODE_ENV !== 'production') {
-  // load dev .env config
-  require('dotenv').config();
-}
-
-// Read the signing secret from the environment variables
+// create Slack events adapter with body data and headers
 const slackSigningSecret = process.env.SLACK_SIGNING_SECRET;
-
-// Initialize the adapter to trigger listeners with envelope data and headers
 const slackEvents = createEventAdapter(slackSigningSecret, {
   includeBody: true,
   includeHeaders: true,
 });
 
-// Initialize a Web Client
+// create Slack web client
 const slack = new WebClient(process.env.SLACK_ACCESS_TOKEN);
 
-// Read the port from the environment variables, fallback to 3000 default.
-const port = process.env.PORT || 3000;
-
-// Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
+// add link_shared Slack event handler
 slackEvents.on('link_shared', (event, body, headers) => {
   console.log(`\nlinks shared event: \n\tfrom user: ${event.user} in channel: ${event.channel}`);
   console.log(`\tevent id: ${body.event_id} event time: ${body.event_time}`);
@@ -45,12 +29,12 @@ slackEvents.on('link_shared', (event, body, headers) => {
   console.log('\tlinks:');
   console.dir(event.links);
 
-  // Call a helper that transforms the URL into a promise for an attachment suitable for Slack
-  Promise.all(event.links.map(messageAttachmentFromLink))
-    // Transform the array of attachments to an unfurls object keyed by URL
+  // transform vs marketplace links to unfurled attachments
+  Promise.all(event.links.map(getLinkInfo))
+    // transform expended link info to unfurls keyed by url
     .then(attachments => keyBy(attachments, 'url'))
     .then(unfurls => mapValues(unfurls, attachment => omit(attachment, 'url')))
-    // Invoke the Slack Web API to append the attachment
+    // send unfurled link attachments to Slack
     .then(unfurls => slack.apiCall('chat.unfurl', {
         channel: event.channel,
         ts: event.message_ts, 
@@ -59,15 +43,36 @@ slackEvents.on('link_shared', (event, body, headers) => {
     .catch(console.error);
 });
 
-// All errors in listeners are caught here. If this weren't caught, the program would terminate.
+// add generic Slack events error handler
 slackEvents.on('error', (error) => {
-  console.log(error.name); // TypeError
+  console.log(error);
 });
 
+// start built-in Slack events http server
 (async () => {
-  // Start the built-in server
+  const port = process.env.PORT || 3000;
   const server = await slackEvents.start(port);
-
-  // Log a message when the server is ready
   console.log(`Listening for events on port: ${server.address().port}`);
 })();
+
+/**
+ * Creates VS marketplace link unfurl message attachment info.
+ * @param link VS marketplace link to unfurl
+ */
+function getLinkInfo(link) {
+  // create initial unfurl link info
+  const linkInfo = {
+    "color": "#36a64f",
+    "title": link.url,
+    "title_link": link.url,
+    "footer": "VS Marketplace",
+    url: link.url
+  };
+
+  // TODO: get vs marketplace info and generate unfurled link info message attachment
+  // with ext. name, author, installs, downloads, ext. icon, links to repo, issues, etc.
+  // for the vs ext. link. Otherwise, use generic https://marketplace.visualstudio.com/ 
+  // page headers instead ...
+
+  return linkInfo;
+}
